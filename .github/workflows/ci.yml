@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# Superseded PR runs are cancelled; runs on main never are, so a newer push
+# can't abort a deploy that's in progress.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:

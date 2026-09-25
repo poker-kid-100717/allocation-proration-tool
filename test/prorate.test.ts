@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prorate, validateInput } from "../src/lib/prorate";
+import { MAX_AMOUNT, MAX_INVESTORS, prorate, validateInput } from "../src/lib/prorate";
 
 const expectAllocation = (actual: Record<string, number>, expected: Record<string, number>) => {
   expect(Object.keys(actual).sort()).toEqual(Object.keys(expected).sort());
@@ -93,6 +93,31 @@ describe("prorate", () => {
   });
 });
 
+describe("prorate edge cases", () => {
+  it("keeps an investor named __proto__", () => {
+    const result = prorate({
+      allocation_amount: 10,
+      investor_amounts: [{ name: "__proto__", requested_amount: 20, average_amount: 1 }],
+    });
+    expect(Object.keys(result)).toEqual(["__proto__"]);
+    expect(result["__proto__"]).toBe(10);
+    expect(JSON.parse(JSON.stringify(result))).toEqual(JSON.parse('{"__proto__":10}'));
+  });
+
+  it("allocates everything at the largest accepted amounts", () => {
+    const result = prorate({
+      allocation_amount: MAX_AMOUNT,
+      investor_amounts: Array.from({ length: MAX_INVESTORS }, (_, i) => ({
+        name: `I${i}`,
+        requested_amount: MAX_AMOUNT,
+        average_amount: MAX_AMOUNT,
+      })),
+    });
+    const total = Object.values(result).reduce((a, b) => a + b, 0);
+    expect(total).toBeCloseTo(MAX_AMOUNT, -2);
+  });
+});
+
 describe("validateInput", () => {
   const valid = {
     allocation_amount: 100,
@@ -110,6 +135,14 @@ describe("validateInput", () => {
     ["an empty investor list", { ...valid, investor_amounts: [] }],
     ["a missing name", { ...valid, investor_amounts: [{ requested_amount: 1, average_amount: 1 }] }],
     ["a NaN amount", { ...valid, investor_amounts: [{ name: "A", requested_amount: NaN, average_amount: 1 }] }],
+    ["an amount above the limit", { ...valid, investor_amounts: [{ name: "A", requested_amount: 1, average_amount: MAX_AMOUNT * 10 }] }],
+    [
+      "too many investors",
+      {
+        ...valid,
+        investor_amounts: Array.from({ length: MAX_INVESTORS + 1 }, (_, i) => ({ name: `I${i}`, requested_amount: 1, average_amount: 1 })),
+      },
+    ],
     [
       "duplicate names",
       {

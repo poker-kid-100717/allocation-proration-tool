@@ -21,7 +21,9 @@ export type ProrationResult = Record<string, number>;
  * exceeds a request, so the whole allocation is used whenever demand allows.
  */
 export function prorate({ allocation_amount, investor_amounts }: ProrationInput): ProrationResult {
-  const result: ProrationResult = {};
+  // Null prototype: investor names are data, so "__proto__" must be an
+  // ordinary key rather than the inherited prototype setter.
+  const result: ProrationResult = Object.create(null);
   for (const inv of investor_amounts) result[inv.name] = 0;
 
   const totalRequested = investor_amounts.reduce((sum, inv) => sum + inv.requested_amount, 0);
@@ -60,8 +62,12 @@ export type ValidationResult =
   | { ok: true; value: ProrationInput }
   | { ok: false; error: string };
 
+/** Bounds keep sums far from overflow and the per-request work small. */
+export const MAX_INVESTORS = 1000;
+export const MAX_AMOUNT = 1e12;
+
 const isNonNegativeNumber = (v: unknown): v is number =>
-  typeof v === "number" && Number.isFinite(v) && v >= 0;
+  typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= MAX_AMOUNT;
 
 export function validateInput(body: unknown): ValidationResult {
   if (typeof body !== "object" || body === null) {
@@ -70,10 +76,13 @@ export function validateInput(body: unknown): ValidationResult {
   const { allocation_amount, investor_amounts } = body as Record<string, unknown>;
 
   if (!isNonNegativeNumber(allocation_amount)) {
-    return { ok: false, error: "allocation_amount must be a non-negative number." };
+    return { ok: false, error: "allocation_amount must be a number from 0 to 1 trillion." };
   }
   if (!Array.isArray(investor_amounts) || investor_amounts.length === 0) {
     return { ok: false, error: "investor_amounts must be a non-empty array." };
+  }
+  if (investor_amounts.length > MAX_INVESTORS) {
+    return { ok: false, error: `investor_amounts may contain at most ${MAX_INVESTORS} investors.` };
   }
 
   const names = new Set<string>();
@@ -87,10 +96,10 @@ export function validateInput(body: unknown): ValidationResult {
     }
     names.add(name);
     if (!isNonNegativeNumber(requested_amount)) {
-      return { ok: false, error: `investor_amounts[${i}].requested_amount must be a non-negative number.` };
+      return { ok: false, error: `investor_amounts[${i}].requested_amount must be a number from 0 to 1 trillion.` };
     }
     if (!isNonNegativeNumber(average_amount)) {
-      return { ok: false, error: `investor_amounts[${i}].average_amount must be a non-negative number.` };
+      return { ok: false, error: `investor_amounts[${i}].average_amount must be a number from 0 to 1 trillion.` };
     }
   }
 

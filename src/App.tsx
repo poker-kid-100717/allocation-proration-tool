@@ -21,7 +21,9 @@ const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "
 export default function App() {
   const [allocation, setAllocation] = useState(EXAMPLE.allocation);
   const [investors, setInvestors] = useState<InvestorRow[]>(EXAMPLE.investors);
-  const [results, setResults] = useState<ProrationResult | null>(null);
+  // Results keep the allocation they were computed for, so editing the form
+  // afterwards never mislabels them.
+  const [results, setResults] = useState<{ allocation: number; amounts: ProrationResult } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +51,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
-      setResults(data);
+      setResults({ allocation: Number(allocation), amounts: data });
     } catch (err) {
       setResults(null);
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -58,7 +60,7 @@ export default function App() {
     }
   };
 
-  const totalAllocated = results ? Object.values(results).reduce((a, b) => a + b, 0) : 0;
+  const totalAllocated = results ? Object.values(results.amounts).reduce((a, b) => a + b, 0) : 0;
 
   return (
     <main className="container">
@@ -131,7 +133,7 @@ export default function App() {
         <section className="card" aria-live="polite">
           <h2>Results</h2>
           <ul className="results">
-            {Object.entries(results).map(([name, amount]) => (
+            {Object.entries(results.amounts).map(([name, amount]) => (
               <li key={name}>
                 <div className="result-row">
                   <span>{name}</span>
@@ -144,7 +146,7 @@ export default function App() {
             ))}
           </ul>
           <p className="total">
-            Allocated {currency.format(totalAllocated)} of {currency.format(Number(allocation))}
+            Allocated {currency.format(totalAllocated)} of {currency.format(results.allocation)}
           </p>
         </section>
       )}
