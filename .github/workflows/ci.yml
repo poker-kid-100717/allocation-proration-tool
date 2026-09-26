@@ -19,12 +19,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -58,12 +59,12 @@ jobs:
           done
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.ready == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.secrets.outputs.ready == 'true'
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
         if: steps.secrets.outputs.ready == 'true'
@@ -75,7 +76,7 @@ jobs:
       - name: Deploy to Cloudflare Workers
         if: steps.secrets.outputs.ready == 'true'
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
