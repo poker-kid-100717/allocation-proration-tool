@@ -4,7 +4,7 @@
 
 Splits a limited investment allocation (for example, a startup round that's oversubscribed) across investors in proportion to their historical average investment. No investor ever receives more than they requested.
 
-**Live:** `https://allocation-proration.<your-subdomain>.workers.dev` _(filled in after the first deploy)_
+The repository is production-buildable and Cloudflare Workers-ready. CI verifies type safety, tests, and the production build on every push and pull request; deployment runs when Cloudflare credentials are configured.
 
 ## The problem
 
