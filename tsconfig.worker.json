@@ -11,5 +11,5 @@
     "isolatedModules": true,
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["worker", "src/lib", "test"]
+  "include": ["worker", "src/engine", "src/scenarios", "test", "bench"]
 }

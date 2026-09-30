@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: { "/api": "http://localhost:8787" },
   },
   test: {
-    include: ["test/**/*.test.ts"],
+    // `npm run bench` swaps the unit tests for the benchmark file.
+    include: process.env.BENCH ? ["bench/**/*.bench.ts"] : ["test/**/*.test.ts"],
   },
 });

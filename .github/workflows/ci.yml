@@ -25,11 +25,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Security audit
+        run: npm audit --audit-level=high
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run lint
+      - name: Unit, property and torture tests
+        run: npm test
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
@@ -68,7 +71,7 @@ jobs:
           cache: npm
       - run: npm ci
         if: steps.secrets.outputs.ready == 'true'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: steps.secrets.outputs.ready == 'true'
         with:
           name: dist
@@ -90,8 +93,10 @@ jobs:
           set -euo pipefail
           test -n "$DEPLOYMENT_URL"
           curl --fail --silent --show-error --retry 5 --retry-delay 3 --retry-all-errors "$DEPLOYMENT_URL/api/health"
-          curl --fail --silent --show-error -X POST "$DEPLOYMENT_URL/api/prorate" \
+          # $100.00 across three equal recipients must come back as 33.34 / 33.33 / 33.33 with a zero difference.
+          response=$(curl --fail --silent --show-error -X POST "$DEPLOYMENT_URL/api/allocate" \
             -H 'content-type: application/json' \
-            -d '{"allocation_amount":100,"investor_amounts":[{"name":"A","requested_amount":100,"average_amount":100},{"name":"B","requested_amount":25,"average_amount":25}]}' \
-            | grep -q '"A":80'
+            -d '{"amount":"100.00","currency":"USD","strategy":"equal","obligations":[{"id":"A","outstanding":"100.00"},{"id":"B","outstanding":"100.00"},{"id":"C","outstanding":"100.00"}]}')
+          echo "$response" | grep -q '"allocations":{"A":"33.34","B":"33.33","C":"33.33"}'
+          echo "$response" | grep -q '"difference":"0.00"'
           curl --fail --silent --show-error "$DEPLOYMENT_URL/" | grep -q '<div id="root">'
