@@ -30,11 +30,13 @@ The algorithm lives in [`src/lib/prorate.ts`](src/lib/prorate.ts) as a pure, dep
 ```
 Browser ──► Cloudflare Worker (single origin)
               ├── /api/*   → worker/index.ts  (validation + prorate())
+              │              └── /api/rounds → PostgreSQL (saved rounds, jsonb)
               └── /*       → static assets (Vite-built React SPA)
 ```
 
 - **Frontend:** React 19 + TypeScript, built with Vite. No UI framework; plain CSS with light/dark themes and a responsive layout.
 - **API:** A Cloudflare Worker that serves `POST /api/prorate` and `GET /api/health`. Input is validated (finite, non-negative numbers; unique, non-empty names), and invalid input returns a `400` with a message.
+- **Database:** PostgreSQL (for example [Neon](https://neon.tech)'s free tier) via `postgres.js` from the Worker. `POST /api/rounds` prorates and saves the round; `GET /api/rounds` lists recent rounds and `GET /api/rounds/{id}` returns one. Inputs and results are stored as `jsonb`, with the allocation and investor count as indexed columns; the table is created on first use. Without `DATABASE_URL` the calculator works as before and `/api/rounds` answers `503`.
 - **Hosting:** [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/). One `wrangler deploy` ships the UI and the API together. `/api/*` runs the Worker first; every other path is served from the edge cache with SPA fallback.
 - **CI/CD:** GitHub Actions runs the typecheck, the tests, and the build on every push and PR. Pushes to `main` deploy to Cloudflare and then smoke-test the live URL.
 
@@ -64,6 +66,7 @@ Requires Node 22+.
 ```bash
 npm install
 npm test              # unit tests for the algorithm and the Worker
+TEST_DATABASE_URL=postgres://user:pass@localhost:5432/rounds_test npm test   # also runs the PostgreSQL store tests
 npm run dev:worker    # build, then serve UI + API on the Workers runtime at http://localhost:8787
 ```
 
@@ -71,11 +74,12 @@ For UI work with hot reload, run `npx wrangler dev` in one terminal and `npm run
 
 ## Deploying
 
-Deployment is automatic on push to `main`. It needs two repository secrets:
+Deployment is automatic on push to `main`. It uses these repository secrets:
 
 | Secret                  | Where to get it                                                               |
 | ----------------------- | ----------------------------------------------------------------------------- |
 | `CLOUDFLARE_API_TOKEN`  | Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → Account ID (right sidebar)           |
+| `DATABASE_URL` (recommended) | PostgreSQL URL for saved rounds, for example a Neon pooled connection string ending in `?sslmode=require`. Uploaded as a Worker secret. |
 
 To deploy by hand, run `npx wrangler login` and then `npm run deploy`.

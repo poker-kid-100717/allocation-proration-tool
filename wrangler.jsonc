@@ -3,6 +3,8 @@
   "name": "allocation-proration",
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-01",
+  // postgres.js (saved rounds) uses Node sockets.
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

@@ -5,8 +5,10 @@ const env: Env = {
   ASSETS: { fetch: async () => new Response("<!doctype html>", { status: 200 }) } as unknown as Fetcher,
 };
 
+const ctx = { waitUntil: () => {}, passThroughOnException: () => {} } as unknown as ExecutionContext;
+
 const call = (path: string, init?: RequestInit) =>
-  worker.fetch(new Request(`https://example.com${path}`, init), env);
+  worker.fetch(new Request(`https://example.com${path}`, init), env, ctx);
 
 describe("worker", () => {
   it("prorates a valid request", async () => {

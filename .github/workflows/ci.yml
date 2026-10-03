@@ -18,6 +18,17 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: rounds_test
+          POSTGRES_USER: rounds
+          POSTGRES_PASSWORD: rounds-ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U rounds -d rounds_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -28,6 +39,8 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
+        env:
+          TEST_DATABASE_URL: postgres://rounds:rounds-ci@127.0.0.1:5432/rounds_test
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
@@ -81,6 +94,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+          # Uploaded as the Worker secret DATABASE_URL once that repository secret exists; until then
+          # the calculator works and /api/rounds answers 503.
+          secrets: ${{ secrets.DATABASE_URL != '' && 'DATABASE_URL' || '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Smoke test production
         if: steps.secrets.outputs.ready == 'true'
         shell: bash
