@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "build:demo": "vite build --mode demo"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260923.1",

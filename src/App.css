@@ -225,3 +225,8 @@ footer a {
     width: auto;
   }
 }
+
+.eyebrow { color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em; margin: 0 0 10px; }
+.demo-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.demo-banner p { color: var(--muted); margin: 6px 0 0; font-size: 0.9rem; line-height: 1.5; }
+.demo-note { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin: 12px 0 24px; }

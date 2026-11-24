@@ -79,3 +79,8 @@ Deployment is automatic on push to `main`. It needs two repository secrets:
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → Account ID (right sidebar)           |
 
 To deploy by hand, run `npx wrangler login` and then `npm run deploy`.
+
+
+## Public marketplace demo
+
+Use `npm ci && npm run check && npm run build:demo` to build a static demonstration in `dist/`. Host the directory on an HTTPS static host such as Render. The demo deliberately uses the same validated proration engine in the browser, without a backend, database, account, or external credentials. The standard build continues to use the Cloudflare Worker API. The Try demo button loads three fictional investors and calculates their capped allocation. Expected displayed results: Investor A $97.97, Investor B $1.03, Investor C $1.00; allocated total $100.00. Results are rounded for display; cent-exact settlement is not implemented. This is an illustrative software asset, not a regulated financial service. Before listing, verify the deployed URL and actual browser interaction, inspect screenshots, confirm ownership and sale terms. No claims about revenue or commercial adoption are made.
