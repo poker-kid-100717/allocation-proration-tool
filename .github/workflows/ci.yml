@@ -31,7 +31,7 @@ jobs:
       - run: npm run build
       - run: npm run build:demo
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
@@ -70,7 +70,7 @@ jobs:
           cache: npm
       - run: npm ci
         if: steps.secrets.outputs.ready == 'true'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: steps.secrets.outputs.ready == 'true'
         with:
           name: dist
